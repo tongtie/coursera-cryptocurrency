@@ -69,6 +69,8 @@ public class MaxFeeTxHandler {
      */
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
 
+        //大小比较后的集合
+        //使用了TreeSet(Comparator<? super E> comparator)
         Set<Transaction> txsSortedByFees = new TreeSet<>((tx1, tx2) -> {
             double tx1Fees = calcTxFees(tx1);
             double tx2Fees = calcTxFees(tx2);

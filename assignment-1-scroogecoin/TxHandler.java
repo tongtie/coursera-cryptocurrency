@@ -28,21 +28,28 @@ public class TxHandler {
         UTXOPool uniqueUtxos = new UTXOPool();
         double previousTxOutSum = 0;
         double currentTxOutSum = 0;
+        //遍历tx的input
         for (int i = 0; i < tx.numInputs(); i++) {
             Transaction.Input in = tx.getInput(i);
             UTXO utxo = new UTXO(in.prevTxHash, in.outputIndex);
             Transaction.Output output = utxoPool.getTxOutput(utxo);
+            //验证问题1
             if (!utxoPool.contains(utxo)) return false;
+            //问题2
             if (!Crypto.verifySignature(output.address, tx.getRawDataToSign(i), in.signature))
                 return false;
+            //问题3， double spend
             if (uniqueUtxos.contains(utxo)) return false;
             uniqueUtxos.addUTXO(utxo, output);
+            // input values
             previousTxOutSum += output.value;
         }
         for (Transaction.Output out : tx.getOutputs()) {
+            //问题4
             if (out.value < 0) return false;
             currentTxOutSum += out.value;
         }
+        //问题5
         return previousTxOutSum >= currentTxOutSum;
     }
 
@@ -56,12 +63,15 @@ public class TxHandler {
         Set<Transaction> validTxs = new HashSet<>();
 
         for (Transaction tx : possibleTxs) {
+            //使用上面实现的函数验证
             if (isValidTx(tx)) {
                 validTxs.add(tx);
+                //去掉使用的
                 for (Transaction.Input in : tx.getInputs()) {
                     UTXO utxo = new UTXO(in.prevTxHash, in.outputIndex);
                     utxoPool.removeUTXO(utxo);
                 }
+                //加上未使用的
                 for (int i = 0; i < tx.numOutputs(); i++) {
                     Transaction.Output out = tx.getOutput(i);
                     UTXO utxo = new UTXO(tx.getHash(), i);
