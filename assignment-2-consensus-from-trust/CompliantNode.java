@@ -26,6 +26,7 @@ public class CompliantNode implements Node {
 
     public void setFollowees(boolean[] followees) {
         this.followees = followees;
+        //Malicious node: be functionally dead and never actually broadcast any transactions.
         this.blackListed = new boolean[followees.length];
     }
 
@@ -42,11 +43,13 @@ public class CompliantNode implements Node {
     public void receiveFromFollowees(Set<Candidate> candidates) {
         Set<Integer> senders = candidates.stream().map(c -> c.sender).collect(toSet());
         for (int i = 0; i < followees.length; i++) {
+            // 根据恶意节点不参与广播判断恶意节点
             if (followees[i] && !senders.contains(i))
                 blackListed[i] = true;
         }
         for (Candidate c : candidates) {
             if (!blackListed[c.sender]) {
+                // 重新生成待广播的交易信息
                 pendingTransactions.add(c.tx);
             }
         }
